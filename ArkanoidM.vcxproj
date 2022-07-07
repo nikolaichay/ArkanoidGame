@@ -145,9 +145,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bonus.cpp" />
+    <ClCompile Include="BonusManager.cpp" />
     <ClCompile Include="Brick.h" />
-    <ClCompile Include="Figure.cpp" />
+    <ClCompile Include="Field.cpp" />
     <ClCompile Include="Functions.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Ball.cpp" />
     <ClCompile Include="Brick.cpp" />
@@ -155,7 +158,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ball.h" />
+    <ClInclude Include="Bonus.h" />
+    <ClInclude Include="BonusManager.h" />
+    <ClInclude Include="Field.h" />
     <ClInclude Include="FunctionsAndConst.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="Platform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

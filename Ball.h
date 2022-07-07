@@ -1,14 +1,15 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
-using namespace std;
-using namespace sf;
-constexpr double RadiusBall{ 10.f }; constexpr double ball_vel_x{ 6.f }; constexpr double ball_vel_y{ 8.f };
+const double RadiusBall = 7.f ; const double ball_vel_x = 5.f; const double ball_vel_y = 7.f ;
 class Platform;
 class Brick;
-class Ball : public CircleShape {
+class Ball : public sf::CircleShape {
 private:
-	Vector2f vel{ 0, 0 };
+	sf::Vector2f vel{ 0, 0 };
+	bool stickPlatform;
+	bool reflcectBot;
+	bool reflectRandom;
 public:
 	Ball(double x, double y);
 	double getX();
@@ -17,9 +18,17 @@ public:
 	double isRight();
 	double isTop();
 	double isBot();
-	void ReflectPlatform(Platform* platform);
+	void ReflectPlatform(std::shared_ptr<Platform> platform);
 	bool ReflectBrick(const Brick& brick);
+	sf::Vector2f GetSpeed();
+	void ChangeSpeed(sf::Vector2f newSpeed);
+	void IncreaseSpeed(sf::Vector2f accl);
+	void SetReflectBot(bool t);
+	void SetRandomReflect(bool t);
 	void ReflectWall();
-	void update();
-	void Draw(shared_ptr<RenderWindow> window);
+	void MovingWith();
+	void Move();
+	void Draw(std::shared_ptr<sf::RenderWindow> window);
+	void RandomlyReflect();
+	bool ReflectBot();
 };

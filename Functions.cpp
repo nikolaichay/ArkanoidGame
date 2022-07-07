@@ -1,4 +1,9 @@
 #include "FunctionsAndConst.h"
+using namespace std;
+using namespace sf;
+
+
+const sf::Vector2u FIELD_SIZE = { 6U, 5U };
 int sideIntersect(sf::FloatRect first, sf::FloatRect second) {
 	sf::FloatRect cross;
 	if (!first.intersects(second, cross)) {

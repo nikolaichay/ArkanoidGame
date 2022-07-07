@@ -1,12 +1,13 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
-using namespace std;
-using namespace sf;
-constexpr double PlatformWidth{ 100.f }; constexpr double PlatformHeight{ 15.f }; constexpr double PlatformVel{ 8.f };
-class Platform : public RectangleShape {
+#include "FunctionsAndConst.h"
+
+const double PlatformWidth = 100.f; const double PlatformHeight = 15.f; const double PlatformVel = 8.f;
+class Platform : public sf::RectangleShape {
 private:
-	Vector2f vel{ 0, 0 };
+	sf::Vector2f vel{ 0, 0 };
+	bool stick_ball;
 public:
 	Platform(double x, double y);
 	double getX();
@@ -15,6 +16,8 @@ public:
 	double isRight();
 	double isTop();
 	double isBot();
-	void update();
-	void Draw(shared_ptr <RenderWindow> window);
+	void Move();
+	void SetStickBall(bool t);
+	bool IsStickBall();
+	void Draw(std::shared_ptr <sf::RenderWindow> window);
 };

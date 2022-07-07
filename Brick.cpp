@@ -1,15 +1,20 @@
 #include "Brick.h"
 #include "FunctionsAndConst.h"
-Brick::Brick(const Vector2f& size, const Vector2f& pos,
-	enum class TYPE type, Color c) {
+using namespace std;
+using namespace sf;
+Brick::Brick(const Vector2f& size, const Vector2f& pos, int _health,
+	TYPE _type, Color c) {
 	setSize(size);
 	setFillColor(c);
-	setOutlineColor(sf::Color::Black);
+	setOutlineColor(Color::Black);
 	setOutlineThickness(0.5f);
 	setPosition(pos);
 	move_dir = -1;
-	health = MAX_HEALTH;
-	type = type;
+	health = _health;
+	type = _type;
+}
+int Brick::GetType() { 
+	return int(type);
 }
 
 int Brick::ReduceHealth() {
@@ -24,4 +29,10 @@ int Brick::ReduceHealth() {
 		setFillColor(Color::Red);
 	}
 	return health;
+}
+void MovingBrick::Move() {
+	if (getPosition().x <= 0 || getPosition().x + getSize().x >= windowWidth)
+		SetDirection(-1*GetDirection());
+	Vector2f sp = { speed * GetDirection(),0 };
+	move(sp);
 }

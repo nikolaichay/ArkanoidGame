@@ -1,7 +1,7 @@
 #include "Ball.h"
-#include "Platform.h"
-#include "Brick.h"
-#include "FunctionsAndConst.h"
+#include "Game.h"
+
+const int RANDOM_REFLECT_CHANCE = 20;
 using namespace std;
 using namespace sf;
 Ball::Ball(double x, double y) {
@@ -9,8 +9,11 @@ Ball::Ball(double x, double y) {
 	setRadius(RadiusBall);
 	setFillColor(Color::White);
 	setOrigin(RadiusBall, RadiusBall);
-	vel.x = ball_vel_x;
+	vel.x = -ball_vel_x;
 	vel.y = -ball_vel_y;
+	stickPlatform = false;
+	reflcectBot = false;
+	reflectRandom = false;
 }
 double Ball::getX() {
 	return getPosition().x;
@@ -31,7 +34,7 @@ double Ball::isBot() {
 	return getY() + getRadius();
 }
 
-void Ball::ReflectPlatform(Platform* platform) {
+void Ball::ReflectPlatform(std::shared_ptr<Platform> platform) {
 	auto ballPos = getPosition();
 	auto bounds = platform->getGlobalBounds();
 	int sides = sideIntersect(bounds, getGlobalBounds());
@@ -42,15 +45,17 @@ void Ball::ReflectPlatform(Platform* platform) {
 	if (sides & side::top) {
 		ballPos.y = bounds.top - (ballPos.y + 2 * getRadius() - bounds.top);
 		vel.y = -vel.y;
+		if (platform->IsStickBall()) {
+			stickPlatform = true;
+			platform->SetStickBall(false);
+			platform->setFillColor(Color::Blue);
+			setPosition(ballPos.x, ballPos.y);
+		}
 	}
 	if (sides & side::right) {
 		ballPos.x = bounds.left + bounds.width - (ballPos.x - bounds.left - bounds.width);
 		vel.x = -vel.x;
 	}
-	/*if (sides & side::bot) {
-		ballPos.y = bounds.top + bounds.height - (ballPos.y - bounds.top - bounds.height);
-		vel.y = -vel.y;
-	}*/
 }
 void Ball::ReflectWall() {
 	if (isLeft() < 0) {
@@ -77,88 +82,6 @@ bool Ball::ReflectBrick(const Brick& brick) {
 
 	double max_dist = sqrt(vel.y * vel.y + vel.x * vel.x);
 
-	/*bool y_more_blocks_bot = fabs(ballPos.y - (brickPos.y + brickSize.y)) < max_dist;
-	bool y_less_blocks_top = fabs(ballPos.y + 2 * rad - brickPos.y) < max_dist;
-	bool x_more_blocks_left = fabs(ballPos.x + 2 * rad - brickPos.x) < max_dist;
-	bool x_less_blocks_right = fabs(ballPos.x - (brickPos.x + brickSize.x)) < max_dist;
-
-	bool y_more_blocks_bot_strict = ballPos.y > brickPos.y;
-	bool y_less_blocks_top_strict = ballPos.y < brickPos.y + brickSize.y;
-	bool x_more_blocks_left_strict = ballPos.x > brickPos.x;
-	bool x_less_blocks_right_strict = ballPos.x < brickPos.x + brickSize.x;
-
-
-	if (y_more_blocks_bot && x_more_blocks_left_strict &&
-	x_less_blocks_right_strict) {
-	vel.y *= -1;
-	isHit = true;
-	}
-
-	else if (y_less_blocks_top && x_more_blocks_left_strict &&
-	x_less_blocks_right_strict) {
-	vel.y *= -1;
-	isHit = true;
-	}
-
-	else if (x_more_blocks_left && y_more_blocks_bot_strict &&
-	y_less_blocks_top_strict) {
-	vel.x *= -1;
-	isHit = true;
-	}
-
-	else if (x_less_blocks_right && y_more_blocks_bot_strict &&
-	y_less_blocks_top_strict) {
-	vel.x *= -1;
-	isHit = true;
-	}
-
-	else if (x_less_blocks_right && y_more_blocks_bot) {
-		vel.x *= -1;
-		vel.y *= -1;
-		isHit = true;
-	}
-
-
-	else if (x_less_blocks_right && y_less_blocks_top) {
-		vel.x *= -1;
-		vel.y *= -1;
-		isHit = true;
-	}
-
-	else if (x_more_blocks_left && y_less_blocks_top) {
-		vel.x *= -1;
-		vel.y *= -1;
-		isHit = true;
-	}
-
-	else if (x_more_blocks_left && y_more_blocks_bot) {
-		vel.x *= -1;
-		vel.y *= -1;
-		isHit = true;
-	}*/
-
-	/*bool isTop = abs(ballPos.y - (brickPos.y + brickSize.y)) > vel.y;
-	bool isBot = abs((ballPos.y + 2 * rad) - (brickPos.y)) < vel.y;
-	bool isLeft = ballPos.x >= (brickPos.x + brickSize.x);
-	bool isRight = (ballPos.x + 2 * rad) <= (brickPos.x);
-
-	if (isLeft) {
-		vel.x *= -1;
-		isHit = true;
-	}
-	else if (isRight) {
-		vel.x *= -1;
-		isHit = true;
-	}
-
-	if (isTop) {
-		vel.y *= -1;
-		isHit = true;
-	}
-	else if (isBot) {
-		vel.y *= -1;
-		isHit = true;
-	}*/
 	auto bounds = brick.getGlobalBounds();
 	int sides = sideIntersect(bounds, getGlobalBounds());
 	if (sides & side::left) {
@@ -184,11 +107,68 @@ bool Ball::ReflectBrick(const Brick& brick) {
 	return isHit;
 }
 
-void Ball::update() {
-	move(vel);
+void Ball::MovingWith() {
+	auto x = getPosition().x;
+
+	if (Keyboard::isKeyPressed(Keyboard::Left) || Keyboard::isKeyPressed(Keyboard::A))
+		if (x >= 0)
+			move({ -PlatformVel, 0 });
+	if (Keyboard::isKeyPressed(Keyboard::Right) || Keyboard::isKeyPressed(Keyboard::D))
+		if (x + 2 * getRadius() <= windowWidth)
+			move({ PlatformVel, 0 });
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+		setFillColor(sf::Color::White);
+		stickPlatform = false;
+	}
+}
+
+void Ball::Move() {
+	if (stickPlatform) {
+		MovingWith();
+	}
+	else {
+		if (reflectRandom) {
+			int tmp = rand() % 100;
+			if (tmp < RANDOM_REFLECT_CHANCE) {
+				RandomlyReflect();
+				SetRandomReflect(false);
+				setFillColor(Color::White);
+			}
+		}
+		move(vel);
+	}
 	ReflectWall();
 }
 
 void Ball::Draw(shared_ptr <RenderWindow> window) {
 	window->draw(*this);
+}
+void Ball::SetReflectBot(bool t) {
+	reflcectBot = t;
+}
+void Ball::SetRandomReflect(bool t) {
+	reflectRandom = t;
+}
+Vector2f Ball::GetSpeed() {
+	return vel;
+}
+void Ball::ChangeSpeed(Vector2f newSpeed) {
+	vel = newSpeed;
+}
+void Ball::IncreaseSpeed(Vector2f accl) {
+	if ((vel.x > accl.x && vel.y > accl.y) ||(
+		accl.x > 0 && accl.y > 0)) {
+		vel += accl;
+	}
+}
+void Ball::RandomlyReflect() {
+	if ((rand() % 100) < RANDOM_REFLECT_CHANCE) {
+		if (rand() % 2)
+			vel.y *= -1;
+		else
+			vel.x *= -1;
+	}
+}
+bool Ball::ReflectBot() {
+	return reflcectBot;
 }
